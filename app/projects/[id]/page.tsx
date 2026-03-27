@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation'
 import { getProject, getPersonasForProject } from '@/lib/db/queries'
 import { PersonaCarouselClient } from './PersonaCarouselClient'
+import { RegenerateClient } from './RegenerateClient'
 
 export default async function ProjectPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
@@ -16,8 +17,9 @@ export default async function ProjectPage({ params }: { params: Promise<{ id: st
       <div className="max-w-4xl mx-auto px-6 py-10">
         <div className="flex items-baseline justify-between mb-2">
           <h1 className="text-2xl font-bold text-zinc-900">{project.name}</h1>
-          <div className="flex gap-2">
+          <div className="flex gap-2 items-center">
             <a href="/dashboard" className="text-sm text-zinc-400 hover:text-zinc-600">← Dashboard</a>
+            <RegenerateClient projectId={id} />
           </div>
         </div>
         <p className="text-sm text-zinc-500 mb-8">
