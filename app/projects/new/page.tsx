@@ -11,6 +11,7 @@ export default function NewProjectPage() {
   const router = useRouter()
   const [step, setStep] = useState(1)
   const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   // Form state
   const [productContext, setProductContext] = useState('')
@@ -24,6 +25,7 @@ export default function NewProjectPage() {
 
   async function handleSubmit() {
     setLoading(true)
+    setError(null)
     try {
       // Create project
       const projectRes = await fetch('/api/projects', {
@@ -40,24 +42,34 @@ export default function NewProjectPage() {
           known_assumptions: assumptions || null,
         }),
       })
-      const { project } = await projectRes.json()
+      const projectData = await projectRes.json()
+      if (!projectRes.ok) throw new Error(projectData.error || 'Failed to create project')
 
       // Generate personas
-      await fetch('/api/generate', {
+      const genRes = await fetch('/api/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ project_id: project.id }),
+        body: JSON.stringify({ project_id: projectData.project.id }),
       })
+      if (!genRes.ok) {
+        const genData = await genRes.json().catch(() => ({}))
+        throw new Error(genData.error || `Generation failed (${genRes.status})`)
+      }
 
-      router.push(`/projects/${project.id}`)
+      router.push(`/projects/${projectData.project.id}`)
     } catch (err) {
       console.error(err)
+      setError(err instanceof Error ? err.message : 'Something went wrong')
       setLoading(false)
     }
   }
 
   return (
-    <div className="min-h-screen flex">
+    <div className="min-h-screen flex flex-col">
+      {error && (
+        <div className="bg-red-50 border-b border-red-200 px-6 py-3 text-sm text-red-700">{error}</div>
+      )}
+    <div className="flex-1 flex">
       {/* Left: form (50%) */}
       <div className="w-1/2 flex flex-col border-r border-zinc-100 bg-white min-h-screen">
         {step === 1 && (
@@ -100,6 +112,7 @@ export default function NewProjectPage() {
       <div className="w-1/2 bg-zinc-50 min-h-screen">
         <PersonaPreviewPanel contextLength={productContext.length} />
       </div>
+    </div>
     </div>
   )
 }

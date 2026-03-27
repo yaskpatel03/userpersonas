@@ -24,12 +24,13 @@ export default function LoginPage() {
       if (error) setError(error.message)
       else window.location.href = '/dashboard'
     } else {
-      const { error } = await supabase.auth.signUp({
+      const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: { emailRedirectTo: `${window.location.origin}/auth/callback` },
       })
       if (error) setError(error.message)
+      else if (data.session) window.location.href = '/dashboard'
       else setMessage('Check your email to confirm your account.')
     }
     setLoading(false)

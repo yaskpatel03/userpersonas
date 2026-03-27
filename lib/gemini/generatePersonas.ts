@@ -5,11 +5,15 @@ import type { Project, PersonaPayload } from '@/lib/personas/types'
 
 type ProjectInput = Pick<Project, 'product_context' | 'category' | 'geography' | 'user_type' | 'key_workflows' | 'constraints' | 'known_assumptions'>
 
+function stripMarkdown(text: string): string {
+  return text.replace(/^```(?:json)?\n?/m, '').replace(/\n?```$/m, '').trim()
+}
+
 export async function generatePersonas(project: ProjectInput): Promise<PersonaPayload[]> {
   // Stage 1: Segmentation
   const segPrompt = buildSegmentationPrompt(project)
   const segResult = await flashModel.generateContent(segPrompt)
-  const segText = segResult.response.text().trim()
+  const segText = stripMarkdown(segResult.response.text().trim())
 
   let segmentation: { segments: Array<{ suggested_name: string; suggested_gender: string }> }
   try {
@@ -21,7 +25,7 @@ export async function generatePersonas(project: ProjectInput): Promise<PersonaPa
   // Stage 2: Build personas
   const personaPrompt = buildPersonaPrompt(segText, project)
   const personaResult = await flashModel.generateContent(personaPrompt)
-  const personaText = personaResult.response.text().trim()
+  const personaText = stripMarkdown(personaResult.response.text().trim())
 
   let parsed: { personas: PersonaPayload[] }
   try {

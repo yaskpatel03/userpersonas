@@ -11,13 +11,19 @@ export async function POST(request: NextRequest) {
   const { project_id } = await request.json()
   if (!project_id) return NextResponse.json({ error: 'project_id required' }, { status: 400 })
 
-  const project = await getProject(project_id)
+  try {
+    const project = await getProject(project_id)
 
-  // Delete existing personas before regenerating
-  await deletePersonasForProject(project_id)
+    // Delete existing personas before regenerating
+    await deletePersonasForProject(project_id)
 
-  const personas = await generatePersonas(project)
-  const saved = await savePersonas(project_id, personas)
+    const personas = await generatePersonas(project)
+    const saved = await savePersonas(project_id, personas)
 
-  return NextResponse.json({ personas: saved })
+    return NextResponse.json({ personas: saved })
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'Generation failed'
+    console.error('Generate error:', message)
+    return NextResponse.json({ error: message }, { status: 500 })
+  }
 }
